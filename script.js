@@ -1,16 +1,4 @@
 ```javascript
-const alarmSound = document.getElementById('alarmSound');
-```javascript
-function playAlarm() {
-alarmSound.loop = true; // Agar suara berulang terus
-alarmSound.play(); // Memutar suara
-}
-```javascript
-function stopAlarm() {
-alarmSound.pause(); // Menghentikan suara
-alarmSound.currentTime = 0; // Mengatur ulang waktu ke awal (agar kalau diputar lagi mulai dari awal)
-}
-```javascript
 // --- 1. Mengambil Elemen HTML yang Dibutuhkan ---
 const displayClock = document.getElementById('displayClock');
 const alarmTimeInput = document.getElementById('alarmTime');
@@ -35,7 +23,10 @@ const currentHourMinute = `${hours}:${minutes}`;
 if (currentHourMinute === alarmSetTime) {
 playAlarm();
 // Agar alarm tidak berbunyi terus menerus setiap detik setelah match
-// Kita bisa menonaktifkan alarm setelah berbunyi, atau menambahkan logic "sudah berbunyi"
+// Kita bisa menonaktifkan alarm setelah berbuny
+
+Cimeme:
+i, atau menambahkan logic "sudah berbunyi"
 // Untuk sementara, kita akan stop pengecekan alarm setelah berbunyi sekali
 // Atau pengguna harus menekan tombol Stop Alarm
 }
