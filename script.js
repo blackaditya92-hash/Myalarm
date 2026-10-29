@@ -15,7 +15,7 @@ const now = new Date();
 const hours = String(now.getHours()).padStart(2, '0');
 const minutes = String(now.getMinutes()).padStart(2, '0');
 const seconds = String(now.getSeconds()).padStart(2, '0');
-displayClock.textContent = `${hours}:${minutes}:${seconds}`;
+displayClock.textContent = displayClock.textContent = `${hours}:${minutes}:${seconds}`;
 
 // Setiap detik, cek apakah sudah waktunya alarm berbunyi
 if (alarmSetTime) {
@@ -66,7 +66,7 @@ const selectedTime = alarmTimeInput.value; // Ambil waktu dari input
 if (selectedTime) {
 alarmSetTime = selectedTime;
 console.log(`Alarm diatur untuk pukul: ${alarmSetTime}`);
-alert(`Alarm diatur untuk pukul: ${alarmSetTime}`);
+alert(`Alarm diatur untuk pukul: ${alarmSetTime}`); 
 setAlarmButton.textContent = 'Alarm Diatur';
 // Kita tidak akan langsung memutar alarm di sini,
 // tapi biarkan updateClock() yang mengecek setiap detik.
