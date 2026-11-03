@@ -1,18 +1,23 @@
-# Myalarm - paket perbaikan
+# Myalarm - versi perbaikan
 
-## File
-- `index.html`: UI dan stylesheet. Hanya memuat `./script.js`.
-- `script.js`: satu-satunya implementasi jam, jadwal, audio alarm, dan kontrol tombol.
+## Fitur
+- Jam dan tanggal real-time.
+- Alarm otomatis berdasarkan jadwal per tanggal.
+- Tambah jadwal alarm, edit tanggal/shift/jam, dan hapus jadwal.
+- Pilihan shift Pagi, Siang, Malam, atau Libur.
+- Waktu alarm dapat diatur untuk setiap tanggal.
+- Jadwal baru dan perubahan disimpan di `localStorage` browser.
+- Audio dibuat melalui Web Audio API, tanpa file MP3 eksternal.
 
-## Cara memasang
-1. Backup file lama.
-2. Ganti `index.html` dan `script.js` di root repository dengan file dari folder ini.
-3. Hapus referensi lama ke `/scripts/app.js`, `999-social-credit-siren.mp3`, dan `favicon.ico` jika masih ada di konfigurasi/template lain.
-4. Deploy ulang di hosting.
-5. Buka DevTools > Network, centang Disable cache, lalu reload. Pastikan `index.html` dan `script.js` berstatus 200 dan tidak ada 404.
+## Penerapan
+1. Backup repository lama.
+2. Ganti `index.html` dan `script.js` di root repository dengan file dari paket ini.
+3. Commit dan push, lalu deploy ulang.
+4. Buka situs dan lakukan hard refresh.
+5. Gunakan menu **Kelola Alarm** untuk menambah atau mengubah jadwal.
 
 ## Catatan penting
-- Jadwal tanggal 29 Oktober sampai 8 November 2026 dipertahankan persis dari source awal.
-- Tanggal yang belum terdaftar sengaja ditampilkan sebagai `Jadwal belum tersedia`; jangan mengasumsikan pola shift tanpa jadwal sebenarnya.
-- Audio dibuat melalui Web Audio API sehingga tidak butuh berkas MP3 eksternal. Browser harus mengizinkan audio setelah tombol Mulai Alarm diklik.
-- Pengingat hanya berjalan selama tab/halaman terbuka. Browser/OS dapat menangguhkan tab di latar belakang; ini bukan sistem notifikasi background atau alarm perangkat yang dijamin berbunyi saat browser ditutup.
+- Penyimpanan `localStorage` hanya berlaku pada browser/perangkat yang sama. Data tidak otomatis tersinkron ke perangkat lain.
+- Alarm hanya dapat berjalan selama halaman/browser tetap aktif. Tab yang ditangguhkan atau komputer yang tidur dapat membuat alarm terlambat.
+- Jadwal bawaan hanya mencakup tanggal yang sudah ada pada source. Tambahkan tanggal lain melalui menu Kelola Alarm.
+- Jam akhir harus lebih besar daripada jam mulai pada hari yang sama.

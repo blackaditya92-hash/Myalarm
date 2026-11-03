@@ -19,7 +19,7 @@
   }
 
   // Isi jadwal per tanggal di sini. Tanggal yang tidak tercantum dianggap belum memiliki jadwal.
-  const jadwalAditPerTanggal = {
+  const defaultSchedule = {
     '2026-10-29': 'PAGI',
     '2026-10-30': 'PAGI',
     '2026-10-31': 'PAGI',
@@ -33,12 +33,109 @@
     '2026-11-08': 'PAGI'
   };
 
-  const waktuAlarmShift = {
+  const defaultAlarmTimes = {
     PAGI: { start: '04:30', end: '05:25' },
     SIANG: { start: '11:30', end: '12:35' },
     MALAM: { start: '20:30', end: '21:15' },
     LIBUR: { start: null, end: null }
   };
+
+  const STORAGE_KEY = 'myalarm.schedule.v1';
+  let schedule = { ...defaultSchedule };
+  let alarmTimes = JSON.parse(JSON.stringify(defaultAlarmTimes));
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if (saved && typeof saved === 'object') {
+      schedule = { ...schedule, ...(saved.schedule || {}) };
+      alarmTimes = { ...alarmTimes, ...(saved.alarmTimes || {}) };
+    }
+  } catch (error) { console.warn('Myalarm: data tersimpan tidak dapat dibaca.', error); }
+
+  const alarmForm = $('alarmForm');
+  const alarmList = $('alarmList');
+  const dateInput = $('alarmDate');
+  const shiftInput = $('alarmShift');
+  const startInput = $('alarmStart');
+  const endInput = $('alarmEnd');
+  const editingInput = $('editingDate');
+
+  function persistSchedule() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ schedule, alarmTimes }));
+  }
+
+  function scheduleFor(date) {
+    const entry = schedule[date];
+    if (!entry) return null;
+    return typeof entry === 'string'
+      ? { shift: entry, ...(defaultAlarmTimes[entry] || {}) }
+      : entry;
+  }
+
+  function renderAlarmList() {
+    alarmList.replaceChildren();
+    const dates = Object.keys(schedule).sort();
+    if (!dates.length) {
+      const empty = document.createElement('div'); empty.className = 'empty';
+      empty.textContent = 'Belum ada jadwal alarm.'; alarmList.append(empty); return;
+    }
+    dates.forEach((date) => {
+      const item = scheduleFor(date);
+      const row = document.createElement('div'); row.className = 'alarm-row';
+      const info = document.createElement('div');
+      const title = document.createElement('strong');
+      title.textContent = `${new Date(`${date}T12:00:00`).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · ${item.shift === 'LIBUR' ? 'Libur' : `Shift ${item.shift}`}`;
+      const detail = document.createElement('small');
+      detail.textContent = item.shift === 'LIBUR' ? 'Tidak ada alarm' : `${item.start || '??:??'}–${item.end || '??:??'}`;
+      info.append(title, detail);
+      const actions = document.createElement('div'); actions.className = 'row-actions';
+      const edit = document.createElement('button'); edit.type = 'button'; edit.className = 'secondary'; edit.textContent = 'Edit';
+      edit.addEventListener('click', () => openEditor(date));
+      const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'danger'; remove.textContent = 'Hapus';
+      remove.addEventListener('click', () => {
+        if (!window.confirm(`Hapus jadwal ${date}?`)) return;
+        delete schedule[date]; persistSchedule(); renderAlarmList(); update();
+      });
+      actions.append(edit, remove); row.append(info, actions); alarmList.append(row);
+    });
+  }
+
+  function openEditor(date = '') {
+    const item = date ? scheduleFor(date) : null;
+    alarmForm.hidden = false;
+    editingInput.value = date;
+    dateInput.value = date || dateKey(new Date());
+    shiftInput.value = item?.shift || 'PAGI';
+    startInput.value = item?.start || defaultAlarmTimes.PAGI.start;
+    endInput.value = item?.end || defaultAlarmTimes.PAGI.end;
+    $('saveAlarmButton').textContent = date ? 'Simpan Perubahan' : 'Simpan Alarm';
+    $('toggleManagerButton').textContent = 'Tutup Form';
+  }
+
+  function closeEditor() {
+    alarmForm.hidden = true; alarmForm.reset(); editingInput.value = '';
+    $('toggleManagerButton').textContent = '＋ Tambah Alarm';
+  }
+
+  shiftInput.addEventListener('change', () => {
+    const preset = defaultAlarmTimes[shiftInput.value];
+    if (preset.start) { startInput.value = preset.start; endInput.value = preset.end; }
+  });
+  $('toggleManagerButton').addEventListener('click', () => alarmForm.hidden ? openEditor() : closeEditor());
+  $('cancelEditButton').addEventListener('click', closeEditor);
+  alarmForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const date = dateInput.value, shift = shiftInput.value;
+    const originalDate = editingInput.value;
+    if (!date) return;
+    if (shift !== 'LIBUR' && (!startInput.value || !endInput.value || startInput.value >= endInput.value)) {
+      window.alert('Waktu akhir harus lebih besar daripada waktu mulai.'); return;
+    }
+    if (originalDate && originalDate !== date) delete schedule[originalDate];
+    schedule[date] = shift === 'LIBUR'
+      ? { shift }
+      : { shift, start: startInput.value, end: endInput.value };
+    persistSchedule(); renderAlarmList(); closeEditor(); update();
+  });
 
   let schedulerRunning = false;
   let audioContext = null;
@@ -136,7 +233,7 @@
     lastTriggeredKey = key;
     card.classList.add('alarm-flash');
     overlay.classList.add('show');
-    $('overlayMessage').textContent = `Waktunya mulai shift ${activeShift}. Alarm: ${waktuAlarmShift[activeShift].start}.`;
+    $('overlayMessage').textContent = `Waktunya mulai shift ${activeShift}. Alarm: ${scheduleFor(today).start}.`;
     statusEl.textContent = `ALARM BERBUNYI · Shift ${activeShift}. Tekan tombol merah untuk menghentikan bunyi.`;
     setPill('ALARM AKTIF', 'active');
     if (!beep()) {
@@ -152,7 +249,7 @@
     const today = dateKey(now);
     if (today !== activeDate) {
       activeDate = today;
-      activeShift = jadwalAditPerTanggal[today] || '';
+      activeShift = (scheduleFor(today)?.shift || '') || '';
       lastTriggeredKey = '';
       manuallyStopped = false;
       clearAlarmVisual();
@@ -173,7 +270,7 @@
       return;
     }
 
-    const shiftTime = waktuAlarmShift[activeShift];
+    const shiftTime = scheduleFor(today);
     if (!shiftTime) {
       shiftEl.textContent = 'Jadwal tidak valid';
       statusEl.textContent = `Jenis shift "${activeShift}" belum memiliki konfigurasi alarm.`;
@@ -221,12 +318,12 @@
       return;
     }
 
-    const shift = jadwalAditPerTanggal[dateKey(now)] || '';
+    const shift = (scheduleFor(dateKey(now))?.shift || '') || '';
     shiftEl.textContent = shift === 'LIBUR' ? 'Hari ini libur' : shift ? `Shift ${shift}` : 'Jadwal belum tersedia';
     if (shift === 'LIBUR') {
       statusEl.textContent = 'Tidak ada alarm yang dijadwalkan hari ini.';
-    } else if (shift && waktuAlarmShift[shift]) {
-      statusEl.textContent = `Jadwal alarm ${waktuAlarmShift[shift].start}–${waktuAlarmShift[shift].end}. Klik mulai untuk mengaktifkan.`;
+    } else if (shift && scheduleFor(dateKey(now))) {
+      statusEl.textContent = `Jadwal alarm ${scheduleFor(dateKey(now)).start}–${scheduleFor(dateKey(now)).end}. Klik mulai untuk mengaktifkan.`;
     } else {
       statusEl.textContent = `Tanggal ${dateKey(now)} belum terdaftar di jadwal.`;
     }
@@ -271,6 +368,7 @@
     stopSound();
   });
 
+  renderAlarmList();
   update();
   window.setInterval(() => { if (!schedulerRunning) update(); }, 1000);
 })();
