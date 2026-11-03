@@ -1,1 +1,0 @@
-<resources><style name="Theme.Myalarm" parent="android:style/Theme.Material.NoActionBar"><item name="android:fontFamily">sans</item><item name="android:colorAccent">#E7B66A</item><item name="android:statusBarColor">#101318</item><item name="android:navigationBarColor">#101318</item><item name="android:windowLightStatusBar">false</item></style></resources>
